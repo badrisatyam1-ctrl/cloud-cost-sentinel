@@ -1,5 +1,6 @@
 from datetime import date
 
+import cloud_cost_sentinel.cli as cli
 import pytest
 
 from cloud_cost_sentinel.alerting.slack import AlertThrottle
@@ -154,6 +155,19 @@ def test_main_reports_too_short_forecast_history_without_traceback(capsys):
 
     assert exit_code == 1
     assert "ccs: error: Need at least 14 days of cost history to forecast, got 10." in capsys.readouterr().err
+
+
+def test_main_reports_missing_forecast_extra_without_traceback(capsys, monkeypatch):
+    def missing_forecast(*args, **kwargs):
+        raise ModuleNotFoundError("No module named 'prophet'")
+
+    monkeypatch.setattr(cli, "forecast_daily_costs", missing_forecast)
+
+    assert main([]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "ccs: error: forecasting requires the 'forecast' extra" in captured.err
+    assert "cloud-cost-sentinel[forecast]" in captured.err
 
 
 def test_format_report_labels_unsent_alerts_accurately(no_webhook_settings):

@@ -168,6 +168,14 @@ def main(argv: list[str] | None = None) -> int:
         # and too little history to forecast from.
         print(f"ccs: error: {exc}", file=sys.stderr)
         return 1
+    except ImportError as exc:
+        print(
+            "ccs: error: forecasting requires the 'forecast' extra; "
+            'install with pip install "cloud-cost-sentinel[forecast]"'
+            f" ({exc})",
+            file=sys.stderr,
+        )
+        return 1
     print(format_report(result))
     return 0
 
