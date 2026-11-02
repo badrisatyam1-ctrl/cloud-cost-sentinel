@@ -169,12 +169,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"ccs: error: {exc}", file=sys.stderr)
         return 1
     except ImportError as exc:
-        print(
-            "ccs: error: forecasting requires the 'forecast' extra; "
-            'install with pip install "cloud-cost-sentinel[forecast]"'
-            f" ({exc})",
-            file=sys.stderr,
-        )
+        # forecast_daily_costs lazily imports prophet/cmdstanpy, which only
+        # ship via the optional `forecast` extra.
+        missing = exc.name or str(exc)
+        print(f"ccs: error: forecasting requires the missing module {missing!r}.", file=sys.stderr)
+        print('ccs: install it with: pip install "cloud-cost-sentinel[forecast]"', file=sys.stderr)
         return 1
     print(format_report(result))
     return 0
