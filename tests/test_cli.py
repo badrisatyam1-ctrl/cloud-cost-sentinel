@@ -120,6 +120,20 @@ def test_main_prints_report_and_returns_zero(capsys, monkeypatch):
     assert "Cloud Cost Sentinel" in captured.out
 
 
+def test_main_returns_failure_when_configured_alert_is_not_sent(capsys, monkeypatch):
+    settings = Settings(slack_webhook_url="https://hooks.slack.test/fail")
+    result = cli.PipelineResult(anomalies=[], forecast=[], drift=cli.BudgetDrift(
+        period_start=date(2026, 1, 1), period_end=date(2026, 1, 1),
+        forecast_total_usd=0, budget_usd=1, drift_usd=0, drift_pct=0,
+        over_budget=False,
+    ), alerts_skipped=[cli.BudgetAlert(source="anomaly", dedup_key="k", message="m")])
+    monkeypatch.setattr(cli, "run_pipeline", lambda: result)
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+
+    assert main([]) == 1
+    assert "Alerts not sent" in capsys.readouterr().out
+
+
 def test_main_reports_missing_file_without_traceback(capsys, tmp_path):
     missing = tmp_path / "nope.csv"
     exit_code = main(["--anomaly-data", str(missing)])
